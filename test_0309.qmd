@@ -1,0 +1,72 @@
+---
+title: "Trying_03-09"
+format: html
+editor: visual
+editor_options: 
+  chunk_output_type: console
+---
+
+# Time to practice
+
+## Loading dataframe
+
+```{r}
+#| label: load-libraries
+#| output: false  
+library(tidyverse) # load the tidyverse libraries, including readr
+```
+
+Let's first load the dataframe we created in todays class (03/09).
+
+```{r}
+#| label: read-google-sheets-data
+
+FactVegComp_link<-"https://docs.google.com/spreadsheets/d/1zccYYcYs67R42hjMpQn6uO1TqQfVfuluZ5LIb6MBuas/pub?gid=1168998728&single=true&output=csv"
+FactVegComp<-read_csv(FactVegComp_link)
+```
+
+Lets now produce some nice graphs.
+
+Bar Plot of Average Cover Percentage by Species:
+
+```{r}
+library(ggplot2)
+
+ggplot(FactVegComp, aes(x = Species_ID, y = CoverPerc)) +
+  geom_bar(stat = "summary", fun = "mean", fill = "steelblue") +
+  theme_minimal() +
+  labs(title = "Average Cover Percentage by Species",
+       x = "Species ID",
+       y = "Average Cover Percentage")
+```
+
+Grouped Bar Plot: Cover Percentage by Species for Each Transect Point:
+
+```{r}
+ggplot(FactVegComp, aes(x = TransectPoint_ID, y = CoverPerc, fill = Species_ID)) +
+  geom_bar(stat = "summary", fun = "mean", position = "dodge") +
+  theme_minimal() +
+  labs(title = "Cover Percentage by Species for Each Transect Point",
+       x = "Transect Point ID",
+       y = "Average Cover Percentage")
+```
+
+Stacked Bar Plot: Cover Percentage by Transect Point and Species:
+
+```{r}
+library(ggplot2)
+
+# Assuming your abbreviated species IDs are like "SP1", "SP2", etc.
+# and you want to replace them with full names like "Species One", "Species Two", etc.
+
+ggplot(FactVegComp, aes(x = factor(TransectPoint_ID), y = CoverPerc, fill = Species_ID)) +
+  geom_bar(stat = "summary", fun = "sum") +
+  scale_fill_discrete(labels = c("fes rub" = "Festuca rubra", "pla mar" = "Plantago maritima", "puc mar" = "Puccinellia maritima")) +  # Full names
+  theme_minimal() +
+  labs(title = "Cover Percentage by Transect Point and Species",
+       x = "Transect Point ID",
+       y = "Cover Percentage",
+       fill = "Species")  # Legend title
+```
+
+# Beautifullll :)
