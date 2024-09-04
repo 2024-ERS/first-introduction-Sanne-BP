@@ -48,6 +48,10 @@ cdat2017 <- read_csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vSpormjGiM
 print(cdat2017)
 
 # plot (with a line and points)  how the number of cockles changes with distance along the transect
+cdat2017 |>
+  ggplot(aes(x=TransectPoint_ID, y=n_obs)) +
+  geom_point()+
+  geom_line()
 
 
 ##### merge the cockle and elevation data into a single table you call "combidat"
@@ -69,13 +73,37 @@ combidat |>
 # y = b0 + b1x   (b0 is intercept and b1 is the slope, x is elevation, y is no cockles
 
 # show this model as a line in ggplot, with the confidence interval
-
+model_lm <- lm(n_obs~elevation_m, data = combidat)
+summary(model_lm)
+  #So, b0 = 29.896 and b1=-18.003 and elevation = 0.5
+  #Number of cockles = 29.896 - 18.003 * 0.5
+combidat |>
+  ggplot(aes(x=elevation_m, y=n_obs)) +
+  geom_point()+
+  geom_smooth(method = "lm")
+ 
 # fit a better model, using a loess smoother
 # show this model in ggplot
+combidat |>
+  ggplot(aes(x=elevation_m, y=n_obs)) +
+  geom_point()+
+  # fit a linear regression
+  geom_smooth(method = "loess")
 
 ##### plot  how the size (as mean length) of cockles changes with  elevation along the transect
 # omit the observations where length is NA (because no cockles were measures)
 # fit a quadratic model (second-order polynomial)
 # show for each point also the standard errors
 # add appropriate labels for the x and y axis 
+combidat |>
+  filter(!is.na(avg_l)) |>
+  ggplot(aes(x = elevation_m, y = avg_l)) +
+  geom_point(size = 3) +                        # Scatter plot of mean lengths
+  geom_errorbar(aes(ymin = avg_l - se_l, 
+                    ymax = avg_l + se_l), width = 0.1) + # Standard errors
+  geom_smooth(method = "lm", formula = y ~ poly(x, 2), se = TRUE, color = "blue") + # Quadratic fit
+  labs(title = "Change in Cockle Size with Elevation",
+       x = "Elevation (m)",
+       y = "Mean Cockle Length (mm)") +
+  theme_minimal()
 
