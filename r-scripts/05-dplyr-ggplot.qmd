@@ -47,6 +47,9 @@ Read the FactCockleSize table with read_csv, which reads it as tibble
 
 ```{r}
 FactCockleSize <- readr::read_csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vSpormjGiM4uWMTIZYm9Upt5j1Ige_Wu9CrhGGdvjXwxmHP2R6S7JDyEmiGTn3fXihl5s5yBn_sdo8h/pub?gid=1538766002&single=true&output=csv")
+print(FactCockleSize)
+names(FactCockleSize)
+nrow(FactCockleSize)
 ```
 
 Plot with ggplot the relation between cockle thickness (thickness_mm, as
@@ -54,6 +57,27 @@ x) and length (length_mm), showing each year with a different color, and
 add a regression line through all the years
 
 ```{r}
+ggplot2::ggplot(data = FactCockleSize, #what data
+                mapping = aes(x = length_mm, 
+                              y = thickness_mm)) + #what is on the axes
+  geom_point()
+
+#there is a big outlier, which is biological impossible (data entry mistake), so remove it
+FactCockleSize |> dplyr::filter(thickness_mm>500)
+
+FactCockleSize <- readr::read_csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vSpormjGiM4uWMTIZYm9Upt5j1Ige_Wu9CrhGGdvjXwxmHP2R6S7JDyEmiGTn3fXihl5s5yBn_sdo8h/pub?gid=1538766002&single=true&output=csv") |> 
+  dplyr::filter(CockleObs_ID!=1531, CockleObs_ID!=469)   #removed cockle obs 1531 & 469
+
+#plot the data again
+ggplot2::ggplot(data = FactCockleSize, #what data
+                mapping = aes(x = length_mm, 
+                              y = thickness_mm)) + #what is on the axes
+  geom_point()
+
+#Find that other outlier
+FactCockleSize |> dplyr::filter(thickness_mm>10 & length_mm<5)
+# also remove cockle obs 469 above
+
 
 ```
 
