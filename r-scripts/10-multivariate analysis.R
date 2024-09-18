@@ -24,7 +24,7 @@ elevdat
 
 # read the macrotransect clay thickness from the soil profile dataset
 claydat<-readr::read_csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vQyEg6KzIt6SdtSKLKbbL3AtPbVffq-Du-3RY9Xq0T9TwPRFcgvKAYKQx89CKWhpTKczPG9hKVGUfTw/pub?gid=943188085&single=true&output=csv") |>
-  dplyr::filter(Year==2024 & SoilType_ID %in% c("clay","clay-organic") & TransectPoint_ID<=900) |>
+  dplyr::filter(Year==2024 & SoilType_ID %in% c("clay","clay-organic") & TransectPoint_ID<=1150) |>
   dplyr::select(TransectPoint_ID,corrected_depth) |>     
   group_by(TransectPoint_ID) |> 
   dplyr::summarize(clay_cm=mean(corrected_depth,na.rm=T)) #calculate average clay layer thickness  for each pole
@@ -46,7 +46,7 @@ gulleydist
   
 # also add redox
 redox<-readr::read_csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vQyEg6KzIt6SdtSKLKbbL3AtPbVffq-Du-3RY9Xq0T9TwPRFcgvKAYKQx89CKWhpTKczPG9hKVGUfTw/pub?gid=1911552509&single=true&output=csv") |>
-  dplyr::filter(Year==2024,TransectPoint_ID<=900) %>%
+  dplyr::filter(Year==2023,TransectPoint_ID<=1150) %>%
   dplyr::group_by(TransectPoint_ID,ProbeDepth) %>%
   dplyr::summarize(redox_mV=mean(redox_raw2_mV,na.rm=T)) %>%
   tidyr::pivot_wider(id_cols=TransectPoint_ID,
@@ -93,12 +93,17 @@ envdat1<-envdat |>
   dplyr::select(-TransectPoint_ID)
 
 # do a principal component analysis (pca) 
-
+pca_env <- prcomp(envdat, center = TRUE, scale=TRUE)
+pca_env
+summary(pca_env)      #cumulative proportion: lower number means more important (?)
+#show the site scores for axis 1
+pca_env$x
 
 # the PCs are reduced dimensions of the dataset
 # you reduce 6 variables to 2 dimensions
 # make a biplot (variable scores plus sample score) the pca ordination
-
+# and label the axis with the explained variation 
+biplot(pca_env, xlab="PC1 49%", ylab="PC2 21%")
 
 ##### ordination: calculate and plot a Non-metric Multidimensional Scaling (NMDS) ordination
 # explore the distance (dissimilarity) in species composition between plots
