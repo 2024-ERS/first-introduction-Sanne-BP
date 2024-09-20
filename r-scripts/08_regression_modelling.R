@@ -212,6 +212,14 @@ anova(m8, test = "Chisq")
 # calculate the predicted value of m2 for every observation, add to the dataset as a variable as pred2
 # add the new predicted line to the previous plot p2, store as object p3 and show it
 
+p1<- orchdat3  |>
+  ggplot2::ggplot(mapping=aes(x=elevation_m, y=CountSum, col=factor(year))) +
+  geom_smooth(method="glm", formula = "y~x+I(x^2)", 
+              method.args = list(family="poisson"), se=F)  
+                #geom_point(size=3)
+p1
+
+#geom_smooth can also plot binomials and other distributions, even glm's
 
 
 
