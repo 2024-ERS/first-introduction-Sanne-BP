@@ -33,13 +33,50 @@ dat_month<-dat %>%
 tail(dat_month,20) # note the definition of the metyear_nov and metyear_dec variables, these months "belong" to the next year
 
 # plot monthly average temperature with 5-year running average
-dat_month %>% ggplot(aes(x=mdate,y=avgtemp_mo_oC)) +
+dat_month |> ggplot(aes(x=mdate,y=avgtemp_mo_oC)) +
+  geom_line() +
+  tidyquant::geom_ma(ma_fun=SMA, n=61, col="red", linetype="solid")+ #SMA = simple moving average
+  coord_x_date(xlim=c("2014-01-01", "2024-08-31")) + #zooming into a particular part of a graph
+  ggtitle("Monthly Temperature at Lauwersoog") +
+  theme(text=element_text(size=10))
 
 # plot monthly rainfall with 1-year running average
-dat_month %>% ggplot(aes(x=mdate,y=totrain_mo_mm)) +
+# not yet working
+dat_month2 <- dat_month |>
+  dplyr::mutate(rain_SMA_12 = rollapply(totrain_mo_mm, width = 13, FUN = sum, fill=NA, 
+                                   align="right")) #rollapply = moving average
+
+dat_month2 |> ggplot() +
+  geom_line(aes(x=mdate,y=totrain_mo_mm))+
+  geom_line(aes(x=mdate,y=rain_SMA_12))+
+
+##  
+dat_month |> ggplot() +
+  geom_line(aes(x=mdate,y=totrain_mo_mm)) +
+  tidyquant::geom_ma(ma_fun=SMA, n=13, col="blue", linetype="solid")+
+  coord_x_date(xlim=c("2014-01-01", "2024-08-31")) +
+  ggtitle("Monthly Rainfall (mm) at Lauwersoog") +
+  theme(text=element_text(size=10))
+
+dat_month |> ggplot() +
+  geom_line(aes(x = mdate, y = totrain_mo_mm)) +
+  tidyquant::geom_ma(aes(x = mdate, y = totrain_mo_mm), 
+                     ma_fun = SMA, n = 13, col = "blue", linetype = "solid") +
+  coord_x_date(xlim = c(as.Date("2014-01-01"), as.Date("2024-08-31"))) +  
+  ggtitle("Monthly Rainfall (mm) at Lauwersoog") +
+  theme(text=element_text(size=10))
 
 # additive time series decomposition of the monthly mean temperatures: what is seasonal and what is a longterm trend?
+monthly_temps <- dat_month |>
+  ungroup() |>
+  dplyr::filter(year!=2024) |>
+  dplyr::select(avgtemp_mo_oC)
 
+plot(monthly_temps$avgtemp_mo_oC)
+monthly_temps_ts <- ts(monthly_temps, frequency = 12, start = c(1992, 1))
+plot(monthly_temps_ts)
+monthly_temps_decomp <- decompose(monthly_temps_ts)
+plot(monthly_temps_decomp)
   
 # note the trend component is the same as the 12 month running average from the previous plot
 # adjust the time series for the seasonal component, and plot it
@@ -52,12 +89,30 @@ dat_month %>% ggplot(aes(x=mdate,y=totrain_mo_mm)) +
 
 
 # average temperature of the coldest month per meteorological year
+dat_metyear_dec <- dat_month |>
+  dplyr::group_by(metyear_dec) |>
+  summarise(minmonth=min(avgtemp_mo_oC, na.rm = T))
+dat_metyear_dec
 
   # note that 2010 and 2011 were the last winters with a (on average) sub-zero month, 
 # potentially relevant for cockle recruitment (crabs stay on mudflats eating spatfall)
+dat_metyear_dec |>
+  ggplot(aes(x=metyear_dec, y=minmonth)) +
+  geom_line(linewidth=0.7) +
+  geom_point(size=3)
 
 # Hellmann index (sum of all below-zero daily average temperatures from 1 November of previous year until 31 march)
 # see https://nl.wikipedia.org/wiki/Koudegetal
+dat_Hellman <- dat |>
+  dplyr::filter(month %in% c(11,12,1,2,3), TG<0) |>
+  dplyr::group_by(metyear_nov) |>
+  summarize(Hellman=sum(TG, na.rm = T))
+tail(dat_Hellman, 10)
+
+dat_Hellman |>
+  ggplot(aes(x=metyear_nov, y=Hellman)) +
+  geom_point()+
+  geom_line()
 
 # 1997 was the last "Elfstedentocht"
 # 2014 -2024 (our transect study) is characterized by only warm winters
@@ -65,4 +120,25 @@ dat_month %>% ggplot(aes(x=mdate,y=totrain_mo_mm)) +
 # Warmth index
 library(quantreg)
 # see for calculation https://www.knmi.nl/nederland-nu/klimatologie/lijsten/warmtegetallen
+dat_WarmthIndex <- dat |>
+  dplyr::filter(month %in% c(4:8), TG>18) |>
+  dplyr::group_by(year) |>
+  dplyr::summarize(WarmthIndex=sum(TG, na.rm = T))
+tail(dat_WarmthIndex, 10)
+
+dat_WarmthIndex |>
+  ggplot(aes(x=year, y=WarmthIndex)) +
+  geom_point(size=2)+
+  #geom_line(linewidth=0.8) +
+  geom_smooth(method="lm", formula=y~x) 
+
+dat_WarmthIndex
+
+#Now i want to have 10, 50 and 90% quantile regression added to the previous plot
+dat_WarmthIndex |>
+  ggplot(aes(x=year, y=WarmthIndex)) +
+  geom_point(size=2)+
+  geom_smooth(method="lm", formula=y~x, col="red") +
+  geom_quantile(quantiles = c(0.1, 0.5, 0.9), col = "blue")
+
 
